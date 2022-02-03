@@ -46,8 +46,8 @@ export class WorkspaceContext {
 
   private openSelectionRegistration!: Disposable;
   private addNoteRegistration!: Disposable;
-  private filterByCommitEnableRegistration!: Disposable;
-  private filterByCommitDisableRegistration!: Disposable;
+  private filterByCurrentResponsibleEnableRegistration!: Disposable;
+  private filterByCurrentResponsibleDisableRegistration!: Disposable;
   private filterByFilenameEnableRegistration!: Disposable;
   private filterByFilenameDisableRegistration!: Disposable;
   private deleteNoteRegistration!: Disposable;
@@ -123,7 +123,7 @@ export class WorkspaceContext {
     const gitHeadPath = path.resolve(gitDirectory, '.git/HEAD');
     const gitWatcher = workspace.createFileSystemWatcher(`**${gitHeadPath}`);
     gitWatcher.onDidChange(() => {
-      this.exportFactory.refreshFilterByCommit();
+      // this.exportFactory.refreshFilterByCommit();
       this.commentsProvider.refresh();
       this.updateDecorations();
     });
@@ -234,13 +234,19 @@ export class WorkspaceContext {
       this.updateDecorations();
     });
 
-    this.filterByCommitEnableRegistration = commands.registerCommand('codeReview.filterByCommitEnable', () => {
-      this.setFilterByCommit(true);
-    });
+    this.filterByCurrentResponsibleEnableRegistration = commands.registerCommand(
+      'codeReview.filterByCurrentResponsibleEnable',
+      () => {
+        this.setFilterByCurrentResponsible(true);
+      },
+    );
 
-    this.filterByCommitDisableRegistration = commands.registerCommand('codeReview.filterByCommitDisable', () => {
-      this.setFilterByCommit(false);
-    });
+    this.filterByCurrentResponsibleDisableRegistration = commands.registerCommand(
+      'codeReview.filterByCurrentResponsibleDisable',
+      () => {
+        this.setFilterByCurrentResponsible(false);
+      },
+    );
 
     this.filterByFilenameEnableRegistration = commands.registerCommand('codeReview.filterByFilenameEnable', () => {
       this.setFilterByFilename(true);
@@ -435,8 +441,8 @@ export class WorkspaceContext {
       this.openSelectionRegistration,
       this.addNoteRegistration,
       this.deleteNoteRegistration,
-      this.filterByCommitEnableRegistration,
-      this.filterByCommitDisableRegistration,
+      this.filterByCurrentResponsibleEnableRegistration,
+      this.filterByCurrentResponsibleDisableRegistration,
       this.filterByFilenameEnableRegistration,
       this.filterByFilenameDisableRegistration,
       this.exportAsHtmlWithDefaultTemplateRegistration,
@@ -457,8 +463,8 @@ export class WorkspaceContext {
     this.openSelectionRegistration.dispose();
     this.addNoteRegistration.dispose();
     this.deleteNoteRegistration.dispose();
-    this.filterByCommitEnableRegistration.dispose();
-    this.filterByCommitDisableRegistration.dispose();
+    this.filterByCurrentResponsibleEnableRegistration.dispose();
+    this.filterByCurrentResponsibleDisableRegistration.dispose();
     this.filterByFilenameEnableRegistration.dispose();
     this.filterByFilenameDisableRegistration.dispose();
     this.exportAsHtmlWithDefaultTemplateRegistration.dispose();
@@ -483,8 +489,8 @@ export class WorkspaceContext {
     this.commentsProvider.refresh();
   }
 
-  private setFilterByCommit(state: boolean) {
-    this.exportFactory.setFilterByCommit(state);
+  private setFilterByCurrentResponsible(state: boolean) {
+    this.exportFactory.setFilterByCurrentResponsible(state);
     this.commentsProvider.refresh();
   }
 }

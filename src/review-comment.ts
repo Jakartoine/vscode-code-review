@@ -9,7 +9,6 @@ import {
   endLineNumberFromStringDefinition,
   standardizeFilename,
 } from './utils/workspace-util';
-import { CommentListEntry } from './comment-list-entry';
 import { getSelectionStringDefinition, hasSelection } from './utils/editor-utils';
 import { getCsvFileLinesAsArray, setCsvFileLines } from './utils/storage-utils';
 import path from 'path';

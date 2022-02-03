@@ -24,7 +24,7 @@ export class CommentLensProvider implements CodeLensProvider {
               ? ` | Priority: ${csvEntry.priority}${symbolForPriority(Number(csvEntry.priority))}`
               : '';
             const command: Command = {
-              title: `Code Review: ${csvEntry.title}${priorityString}`,
+              title: `Code Review: ${csvEntry.responsible ?? 'unknown'} - ${csvEntry.title}${priorityString}`,
               tooltip: csvEntry.comment,
               command: 'codeReview.openSelection',
               arguments: [fileSection, csvRef],

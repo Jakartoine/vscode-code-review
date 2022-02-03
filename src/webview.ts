@@ -11,6 +11,10 @@ import { colorizedBackgroundDecoration } from './utils/decoration-utils';
 export class WebViewComponent {
   /** Store all configured categories */
   private categories: string[] = [];
+  /** Store all configured users */
+  private users: string[] = [];
+  /** Store the initial creator of a code review */
+  private initialUser: string = 'unknown';
   /** Store the color for background-highlighting */
   private highlightDecorationColor: string = '';
   /** Panel used to add/edit a comment */
@@ -35,6 +39,8 @@ export class WebViewComponent {
 
   constructor(public context: ExtensionContext) {
     this.categories = workspace.getConfiguration().get('code-review.categories') as string[];
+    this.users = workspace.getConfiguration().get('code-review.users') as string[];
+    this.initialUser = (workspace.getConfiguration().get('code-review.initialUser') as string) ?? 'unknown';
     this.highlightDecorationColor = workspace
       .getConfiguration()
       .get('code-review.codeSelectionBackgroundColor') as string;
@@ -95,7 +101,9 @@ export class WebViewComponent {
               comment: formData.comment || '',
               category: formData.category || '',
               priority: formData.priority || 0,
-              private: formData.private || 0,
+              done: formData.done || 0,
+              responsible: formData.responsible || 'unknown',
+              createdBy: formData.createdBy || 'unknown',
             };
             commentService.updateComment(newEntry, this.getWorkingEditor());
             panel.dispose();
@@ -103,6 +111,10 @@ export class WebViewComponent {
 
           case 'cancel':
             panel.dispose();
+            break;
+
+          case 'missing-required-fields':
+            window.showErrorMessage('Not all fields have been filled in correctly!');
             break;
 
           case 'delete':
@@ -137,6 +149,7 @@ export class WebViewComponent {
     const decoration = colorizedBackgroundDecoration(getSelectionRanges(editor), editor, this.highlightDecorationColor);
 
     const panel = this.showPanel('Add code review comment', editor.document.fileName);
+    panel.webview.postMessage({ comment: { createdBy: this.initialUser, done: 0 } });
 
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
@@ -144,13 +157,17 @@ export class WebViewComponent {
         switch (message.command) {
           case 'submit':
             commentService.addComment(createCommentFromObject(message.text), this.getWorkingEditor());
+            panel.dispose();
+            break;
+
+          case 'missing-required-fields':
+            window.showErrorMessage('Not all fields have been filled in correctly!');
             break;
 
           case 'cancel':
+            panel.dispose();
             break;
         }
-
-        panel.dispose();
       },
       undefined,
       this.context.subscriptions,
@@ -176,14 +193,19 @@ export class WebViewComponent {
   }
 
   getWebviewContent(fileName: string): string {
-    let selectListString = this.categories.reduce((current, category) => {
-      return current + `<option value="${category}">${category}</option>`;
-    }, '');
     const uri = Uri.joinPath(this.context.extensionUri, 'dist', 'webview.html');
     const pathUri = uri.with({ scheme: 'vscode-resource' });
     return fs
       .readFileSync(pathUri.fsPath, 'utf8')
-      .replace('SELECT_LIST_STRING', selectListString)
+      .replace('SELECT_RESPONSIBLE_LIST_STRING', this.prepareSelectListStringWithValues(this.users))
+      .replace('SELECT_CREATOR_LIST_STRING', this.prepareSelectListStringWithValues(this.users))
+      .replace('SELECT_LIST_STRING', this.prepareSelectListStringWithValues(this.categories))
       .replace('FILENAME', path.basename(fileName));
+  }
+
+  private prepareSelectListStringWithValues(values: string[]): string {
+    return values.reduce((current, value) => {
+      return current + `<option value="${value}">${value}</option>`;
+    }, '');
   }
 }

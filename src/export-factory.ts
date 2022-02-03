@@ -38,12 +38,10 @@ export class ExportFactory {
   private defaultFileName = 'code-review';
   private groupBy: GroupBy;
   private includeCodeSelection = false;
-  private includePrivateComments = false;
-  private privateCommentIcon: string;
-  private filterByCommit: boolean = false;
-  private currentCommitId: string | null = null;
   private filterByFilename: boolean = false;
   private currentFilename: string | null = null;
+  private filterByCurrentResponsible: boolean = false;
+  private currentResponsible: string | null = null;
 
   /**
    * Get comment eligibility
@@ -51,7 +49,7 @@ export class ExportFactory {
    */
   private isCommentEligible(entry: CsvEntry): boolean {
     return (
-      (this.currentCommitId === null || entry.sha === this.currentCommitId) &&
+      (this.currentResponsible === null || entry.responsible === this.currentResponsible) &&
       (this.currentFilename === null || entry.filename === this.currentFilename)
     );
   }
@@ -238,18 +236,18 @@ export class ExportFactory {
     }
     let groupByConfig = workspace.getConfiguration().get('code-review.groupBy') as string;
     if (!groupByConfig || groupByConfig === '-') {
-      groupByConfig = Group.filename;
+      groupByConfig = Group.responsible;
     }
     this.groupBy = groupByConfig as GroupBy;
     this.includeCodeSelection = workspace.getConfiguration().get('code-review.reportWithCodeSelection') as boolean;
-    this.includePrivateComments = workspace.getConfiguration().get('code-review.reportWithPrivateComments') as boolean;
-    this.privateCommentIcon = workspace.getConfiguration().get('code-review.privateCommentIcon') as string;
-
-    this.filterByCommit = workspace.getConfiguration().get('code-review.filterCommentsByCommit') as boolean;
-    this.setFilterByCommit(this.filterByCommit);
 
     this.filterByFilename = workspace.getConfiguration().get('code-review.filterCommentsByFilename') as boolean;
     this.setFilterByFilename(this.filterByFilename, true);
+
+    this.filterByCurrentResponsible = workspace
+      .getConfiguration()
+      .get('code-review.filterCommentsByCurrentResponsible') as boolean;
+    this.setFilterByCurrentResponsible(this.filterByCurrentResponsible, true);
   }
 
   get basePath(): string {
@@ -276,13 +274,11 @@ export class ExportFactory {
         comment = CsvStructure.finalizeParse(comment);
 
         if (this.isCommentEligible(comment)) {
-          if (this.includePrivateComments || comment.private === 0) {
-            if (exporter?.storeOutside) {
-              const tmp = exporter.handleData(outputFile, comment);
-              data.push(tmp);
-            }
-            exporter?.handleData(outputFile, comment);
+          if (exporter?.storeOutside) {
+            const tmp = exporter.handleData(outputFile, comment);
+            data.push(tmp);
           }
+          exporter?.handleData(outputFile, comment);
         }
       })
       .on('end', (_rows: number) => {
@@ -307,7 +303,9 @@ export class ExportFactory {
           TreeItemCollapsibleState.None,
           commentGroupedInFile.data,
           entry.priority,
-          entry.private,
+          entry.done,
+          entry.createdBy,
+          entry.responsible,
         );
         item.contextValue = 'comment';
         item.command = {
@@ -315,42 +313,11 @@ export class ExportFactory {
           title: 'Open comment',
           arguments: [commentGroupedInFile.data, entry],
         };
-        item.iconPath = this.getIcon(entry.priority, entry.private);
 
         return item;
       });
 
     return Promise.resolve(result);
-  }
-
-  private getIcon(prio: number, priv: number): { light: string; dark: string } | ThemeIcon {
-    switch (priv) {
-      default: {
-        // Public comments
-        let icon = '';
-        switch (prio) {
-          case 3:
-            icon = 'red.svg';
-            break;
-          case 2:
-            icon = 'yellow.svg';
-            break;
-          case 1:
-            icon = 'green.svg';
-            break;
-          default:
-            icon = 'unset.svg';
-            break;
-        }
-
-        const iPath = this.context.asAbsolutePath(path.join('dist', icon));
-        return { light: iPath, dark: iPath };
-      }
-
-      case 1: {
-        return new ThemeIcon(this.privateCommentIcon, themeColorForPriority(prio));
-      }
-    }
   }
 
   public getFilesContainingComments(): Thenable<CommentListEntry[]> {
@@ -369,8 +336,8 @@ export class ExportFactory {
           }
         })
         .on('end', () => {
-          const sortedByFile = this.groupResults(entries, Group.filename);
-          const listEntries = sortedByFile.map((el: ReviewFileExportSection, index: number) => {
+          const sortedByFilename = this.groupResults(entries, Group.filename);
+          const listEntries = sortedByFilename.map((el: ReviewFileExportSection, index: number) => {
             const item = new CommentListEntry(
               '',
               el.group,
@@ -388,7 +355,7 @@ export class ExportFactory {
               arguments: [el],
             };
             item.contextValue = 'file';
-            item.iconPath = {
+            item.overrideIconPath = {
               light: this.context.asAbsolutePath(path.join('dist', 'document-light.svg')),
               dark: this.context.asAbsolutePath(path.join('dist', 'document-dark.svg')),
             };
@@ -466,41 +433,6 @@ export class ExportFactory {
 
   /**
    * Refresh comments filtering state
-   */
-  public refreshFilterByCommit() {
-    this.setFilterByCommit(this.filterByCommit);
-  }
-
-  /**
-   * Enable/Disable filtering comments by commit
-   * @param state The state of the filter
-   * @returns The new state of the filter
-   */
-  public setFilterByCommit(state: boolean): boolean {
-    this.filterByCommit = state;
-    if (this.filterByCommit) {
-      try {
-        const gitDirectory = workspace.getConfiguration().get('code-review.gitDirectory') as string;
-        const gitRepositoryPath = path.resolve(this.workspaceRoot, gitDirectory);
-
-        this.currentCommitId = gitCommitId({ cwd: gitRepositoryPath });
-      } catch (error) {
-        this.filterByCommit = false;
-        this.currentCommitId = null;
-
-        console.log('Not in a git repository. Disabling filter by commit', error);
-      }
-    } else {
-      this.currentCommitId = null;
-    }
-
-    commands.executeCommand('setContext', 'isFilteredByCommit', this.filterByCommit);
-
-    return this.filterByCommit;
-  }
-
-  /**
-   * Refresh comments filtering state
    * @returns True if the state changed, False otherwise
    */
   public refreshFilterByFilename(): boolean {
@@ -536,5 +468,39 @@ export class ExportFactory {
     }
 
     return changedState || changedFile;
+  }
+
+  /**
+   * Refresh comments filtering state
+   * @returns True if the state changed, False otherwise
+   */
+  public refreshFilterByCurrentResponsible(): boolean {
+    return this.setFilterByCurrentResponsible(this.filterByCurrentResponsible);
+  }
+
+  /**
+   * Enable/Disable filtering comments by responsible
+   * @param state The state of the filter
+   * @param force Force the state change, even if it was already correctly set
+   * @returns True if the state changed, False otherwise
+   */
+  public setFilterByCurrentResponsible(state: boolean, force: boolean = false): boolean {
+    this.filterByCurrentResponsible = state;
+    if (this.filterByCurrentResponsible) {
+      try {
+        this.currentResponsible = workspace.getConfiguration().get('code-review.initialUser') as string;
+      } catch (error) {
+        this.filterByCurrentResponsible = false;
+        this.currentResponsible = null;
+
+        console.log('No initial user configured from settings. Disabling filter by responsible', error);
+      }
+    } else {
+      this.currentResponsible = null;
+    }
+
+    commands.executeCommand('setContext', 'isFilteredByCurrentResponsible', this.filterByCurrentResponsible);
+
+    return this.filterByCurrentResponsible;
   }
 }

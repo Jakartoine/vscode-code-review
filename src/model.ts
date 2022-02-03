@@ -20,6 +20,14 @@ export interface CsvEntry {
   filename: string;
   url: string;
   lines: string;
+  /**
+   * Person who made the code review.
+   */
+  createdBy: string;
+  /**
+   * Person in charge to do the code review.
+   */
+  responsible: string;
   title: string;
   comment: string;
   priority: number;
@@ -28,11 +36,11 @@ export interface CsvEntry {
   code?: string;
   /** Unique identifier of the entry */
   id: string;
-  /** Private state of the entry
-   * 0 = public
-   * 1 = private
+  /** Mark as done state of the entry
+   * 0 = to-do
+   * 1 = done
    */
-  private: number;
+  done: number;
 }
 
 /**
@@ -70,13 +78,15 @@ export class CsvStructure {
     'filename',
     'url',
     'lines',
+    'createdBy',
+    'responsible',
     'title',
     'comment',
     'priority',
     'category',
     'additional',
     'id',
-    'private',
+    'done',
   ];
 
   /**
@@ -87,7 +97,7 @@ export class CsvStructure {
    */
   private static readonly defaults: Map<string, () => any> = new Map([
     ['id', () => uuidv4()],
-    ['private', () => 0],
+    ['done', () => 0],
   ]);
 
   /**
@@ -102,7 +112,9 @@ export class CsvStructure {
     ['priority', (priority: any) => priority || 0],
     ['additional', (additional: any) => (additional ? escapeDoubleQuotesForCsv(additional) : '')],
     ['category', (category: any) => category || ''],
-    ['private', (priv: any) => priv || 0],
+    ['createdBy', (createdBy: any) => createdBy || 'unknown'],
+    ['responsible', (responsible: any) => responsible || 'unknown'],
+    ['done', (done: any) => done || 0],
   ]);
 
   /**
@@ -117,6 +129,8 @@ export class CsvStructure {
       comment &&
       (comment['comment']?.length ?? 0) > 0 &&
       (comment['filename']?.length ?? 0) > 0 &&
+      (comment['createdBy']?.length ?? 0) > 0 &&
+      (comment['responsible']?.length ?? 0) > 0 &&
       (comment['lines']?.match(/^(\d+:\d+-\d+:\d+)(\|(\d+:\d+-\d+:\d+))*$/gm) ?? false) &&
       uuidValidate(comment['id'] ?? '');
 
@@ -174,7 +188,7 @@ export class CsvStructure {
   public static finalizeParse(comment: CsvEntry): CsvEntry {
     comment.comment = unescapeEndOfLineFromCsv(comment.comment);
     comment.priority = Number(comment.priority);
-    comment.private = Number(comment.private);
+    comment.done = Number(comment.done);
 
     return comment;
   }

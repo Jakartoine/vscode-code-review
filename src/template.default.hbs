@@ -111,6 +111,12 @@
           <span class="prio-{{line.priority}}">{{line.priority}}</span>
         </td>
       </tr>
+      <tr class="row-responsible">
+        <td class="caption">Responsible</td>
+        <td class="text">
+          <span class="prio-{{line.responsible}}">{{line.responsible}} (created by: {{line.createdBy}})</span>
+        </td>
+      </tr>
       {{#if line.title}}
       <tr class="row-title">
         <td class="caption">Title</td>

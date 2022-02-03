@@ -11,11 +11,12 @@ export interface ReviewFileExportSection {
 }
 
 export enum Group {
+  responsible = 'responsible',
   category = 'category',
   priority = 'priority',
   filename = 'filename',
 }
-export type GroupBy = keyof Pick<CsvEntry, Group.category | Group.priority | Group.filename>;
+export type GroupBy = keyof Pick<CsvEntry, Group.responsible | Group.category | Group.priority | Group.filename>;
 
 export interface ExportMap {
   /**
