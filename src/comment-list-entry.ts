@@ -15,8 +15,6 @@ export class CommentListEntry extends TreeItem {
     public readonly data: ReviewFileExportSection,
     public readonly prio?: number,
     public readonly done?: number,
-    public readonly createdBy?: string,
-    public readonly responsible?: string,
   ) {
     super(label, collapsibleState);
   }
@@ -27,8 +25,8 @@ export class CommentListEntry extends TreeItem {
     }
 
     return this.done
-      ? new ThemeIcon('pass-filled', themeColorForPriority(prio))
-      : new ThemeIcon('circle-large-outline', themeColorForPriority(prio));
+      ? new ThemeIcon('pass-filled', themeColorForPriority(this.prio))
+      : new ThemeIcon('circle-large-outline', themeColorForPriority(this.prio));
   }
 
   get tooltip(): string {

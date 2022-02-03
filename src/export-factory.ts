@@ -2,17 +2,9 @@ import * as fs from 'fs';
 import * as path from 'path';
 import stripIndent from 'strip-indent';
 import handlebars from 'handlebars';
+import * as _ from 'lodash';
 
-import {
-  workspace,
-  Uri,
-  window,
-  ViewColumn,
-  TreeItemCollapsibleState,
-  ExtensionContext,
-  ThemeIcon,
-  commands,
-} from 'vscode';
+import { workspace, Uri, window, ViewColumn, TreeItemCollapsibleState, ExtensionContext, commands } from 'vscode';
 const parseFile = require('@fast-csv/parse').parseFile;
 import { EOL } from 'os';
 import { encode, decode } from 'js-base64';
@@ -31,8 +23,6 @@ import { ReviewFileExportSection, GroupBy, ExportFormat, ExportMap, Group } from
 import { CsvEntry, CsvStructure } from './model';
 import { CommentListEntry } from './comment-list-entry';
 import { FileGenerator } from './file-generator';
-import { themeColorForPriority } from './utils/editor-utils';
-const gitCommitId = require('git-commit-id');
 
 export class ExportFactory {
   private defaultFileName = 'code-review';
@@ -297,15 +287,13 @@ export class ExportFactory {
 
         const item = new CommentListEntry(
           entry.id,
+          entry.responsible,
           entry.title,
-          entry.comment,
           entry.comment,
           TreeItemCollapsibleState.None,
           commentGroupedInFile.data,
           entry.priority,
           entry.done,
-          entry.createdBy,
-          entry.responsible,
         );
         item.contextValue = 'comment';
         item.command = {
@@ -317,7 +305,7 @@ export class ExportFactory {
         return item;
       });
 
-    return Promise.resolve(result);
+    return Promise.resolve(_.orderBy(result, ['done', 'prio', 'label'], ['asc', 'desc', 'asc']));
   }
 
   public getFilesContainingComments(): Thenable<CommentListEntry[]> {
@@ -348,6 +336,7 @@ export class ExportFactory {
                 ? TreeItemCollapsibleState.Expanded
                 : TreeItemCollapsibleState.Collapsed,
               el,
+              1,
             );
             item.command = {
               command: 'codeReview.openSelection',

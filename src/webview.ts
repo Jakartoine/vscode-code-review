@@ -149,7 +149,7 @@ export class WebViewComponent {
     const decoration = colorizedBackgroundDecoration(getSelectionRanges(editor), editor, this.highlightDecorationColor);
 
     const panel = this.showPanel('Add code review comment', editor.document.fileName);
-    panel.webview.postMessage({ comment: { createdBy: this.initialUser, done: 0 } });
+    panel.webview.postMessage({ comment: { createdBy: this.initialUser, done: 0 }, isNewMessage: true });
 
     // Handle messages from the webview
     panel.webview.onDidReceiveMessage(
