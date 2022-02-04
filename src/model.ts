@@ -41,6 +41,10 @@ export interface CsvEntry {
    * 1 = done
    */
   done: number;
+  creationDate?: string;
+  updateDate?: string;
+  /** Person who mark the code review as done. */
+  doneBy: string;
 }
 
 /**
@@ -87,6 +91,9 @@ export class CsvStructure {
     'additional',
     'id',
     'done',
+    'creationDate',
+    'updateDate',
+    'doneBy',
   ];
 
   /**
@@ -115,6 +122,8 @@ export class CsvStructure {
     ['createdBy', (createdBy: any) => createdBy || 'unknown'],
     ['responsible', (responsible: any) => responsible || 'unknown'],
     ['done', (done: any) => done || 0],
+    ['doneBy', (doneBy: any) => doneBy || 'unknown'],
+    ['creationDate', (creationDate: any) => creationDate || new Date().toLocaleDateString()],
   ]);
 
   /**

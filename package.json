@@ -78,19 +78,35 @@
         "title": "Delete"
       },
       {
+        "command": "codeReview.filterByToDoEnable",
+        "title": "Code Review: Only view comments to do",
+        "icon": {
+          "light": "images/icons/to-do-off-light.svg",
+          "dark": "images/icons/to-do-off-dark.svg"
+        }
+      },
+      {
+        "command": "codeReview.filterByToDoDisable",
+        "title": "Code Review: View all comments (done + to-do)",
+        "icon": {
+          "light": "images/icons/to-do-on-light.svg",
+          "dark": "images/icons/to-do-on-dark.svg"
+        }
+      },
+      {
         "command": "codeReview.filterByCurrentResponsibleEnable",
         "title": "Code Review: View comments from the current responsible",
         "icon": {
-          "light": "images/icons/filter-off-light.svg",
-          "dark": "images/icons/filter-off-dark.svg"
+          "light": "images/icons/user-off-light.svg",
+          "dark": "images/icons/user-off-dark.svg"
         }
       },
       {
         "command": "codeReview.filterByCurrentResponsibleDisable",
         "title": "Code Review: View comments from all users",
         "icon": {
-          "light": "images/icons/filter-on-light.svg",
-          "dark": "images/icons/filter-on-dark.svg"
+          "light": "images/icons/user-on-light.svg",
+          "dark": "images/icons/user-on-dark.svg"
         }
       },
       {
@@ -157,6 +173,16 @@
           "command": "codeReview.addNote",
           "when": "view == code-review.list",
           "group": "navigation@0"
+        },
+        {
+          "command": "codeReview.filterByToDoEnable",
+          "when": "view == code-review.list && !isFilteredByToDo",
+          "group": "navigation@1"
+        },
+        {
+          "command": "codeReview.filterByToDoDisable",
+          "when": "view == code-review.list && isFilteredByToDo",
+          "group": "navigation@1"
         },
         {
           "command": "codeReview.filterByCurrentResponsibleEnable",

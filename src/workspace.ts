@@ -46,6 +46,8 @@ export class WorkspaceContext {
 
   private openSelectionRegistration!: Disposable;
   private addNoteRegistration!: Disposable;
+  private filterByToDoEnableRegistration!: Disposable;
+  private filterByToDoDisableRegistration!: Disposable;
   private filterByCurrentResponsibleEnableRegistration!: Disposable;
   private filterByCurrentResponsibleDisableRegistration!: Disposable;
   private filterByFilenameEnableRegistration!: Disposable;
@@ -232,6 +234,14 @@ export class WorkspaceContext {
       this.webview.addComment(this.commentService);
       this.commentsProvider.refresh();
       this.updateDecorations();
+    });
+
+    this.filterByToDoEnableRegistration = commands.registerCommand('codeReview.filterByToDoEnable', () => {
+      this.setFilterByToDo(true);
+    });
+
+    this.filterByToDoDisableRegistration = commands.registerCommand('codeReview.filterByToDoDisable', () => {
+      this.setFilterByToDo(false);
     });
 
     this.filterByCurrentResponsibleEnableRegistration = commands.registerCommand(
@@ -441,6 +451,8 @@ export class WorkspaceContext {
       this.openSelectionRegistration,
       this.addNoteRegistration,
       this.deleteNoteRegistration,
+      this.filterByToDoEnableRegistration,
+      this.filterByToDoDisableRegistration,
       this.filterByCurrentResponsibleEnableRegistration,
       this.filterByCurrentResponsibleDisableRegistration,
       this.filterByFilenameEnableRegistration,
@@ -463,6 +475,8 @@ export class WorkspaceContext {
     this.openSelectionRegistration.dispose();
     this.addNoteRegistration.dispose();
     this.deleteNoteRegistration.dispose();
+    this.filterByToDoEnableRegistration.dispose();
+    this.filterByToDoDisableRegistration.dispose();
     this.filterByCurrentResponsibleEnableRegistration.dispose();
     this.filterByCurrentResponsibleDisableRegistration.dispose();
     this.filterByFilenameEnableRegistration.dispose();
@@ -491,6 +505,11 @@ export class WorkspaceContext {
 
   private setFilterByCurrentResponsible(state: boolean) {
     this.exportFactory.setFilterByCurrentResponsible(state);
+    this.commentsProvider.refresh();
+  }
+
+  private setFilterByToDo(state: boolean) {
+    this.exportFactory.setFilterByToDo(state);
     this.commentsProvider.refresh();
   }
 }

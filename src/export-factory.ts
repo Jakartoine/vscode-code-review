@@ -28,6 +28,7 @@ export class ExportFactory {
   private defaultFileName = 'code-review';
   private groupBy: GroupBy;
   private includeCodeSelection = false;
+  private filterByToDo: boolean = false;
   private filterByFilename: boolean = false;
   private currentFilename: string | null = null;
   private filterByCurrentResponsible: boolean = false;
@@ -39,6 +40,7 @@ export class ExportFactory {
    */
   private isCommentEligible(entry: CsvEntry): boolean {
     return (
+      (!this.filterByToDo || entry.done === 0) &&
       (this.currentResponsible === null || entry.responsible === this.currentResponsible) &&
       (this.currentFilename === null || entry.filename === this.currentFilename)
     );
@@ -319,12 +321,12 @@ export class ExportFactory {
       parseFile(this.inputFile, { delimiter: ',', ignoreEmpty: true, headers: true })
         .on('error', () => this.handleError)
         .on('data', (row: CsvEntry) => {
-          if (this.isCommentEligible(row)) {
+          if (this.isCommentEligible(CsvStructure.finalizeParse(row))) {
             entries.push(row);
           }
         })
         .on('end', () => {
-          const sortedByFilename = this.groupResults(entries, Group.filename);
+          const sortedByFilename = this.groupResults(entries, Group.responsible);
           const listEntries = sortedByFilename.map((el: ReviewFileExportSection, index: number) => {
             const item = new CommentListEntry(
               '',
@@ -332,21 +334,17 @@ export class ExportFactory {
               `(${el.lines.length})`,
               `${el.lines.length} comments`,
               // Expand the first (and only) file when in filtered by filename mode
-              this.filterByFilename && index === 0
+              this.filterByCurrentResponsible && index === 0
                 ? TreeItemCollapsibleState.Expanded
                 : TreeItemCollapsibleState.Collapsed,
               el,
               1,
             );
-            item.command = {
-              command: 'codeReview.openSelection',
-              title: 'reveal comment',
-              arguments: [el],
-            };
+            item.command = undefined;
             item.contextValue = 'file';
             item.overrideIconPath = {
-              light: this.context.asAbsolutePath(path.join('dist', 'document-light.svg')),
-              dark: this.context.asAbsolutePath(path.join('dist', 'document-dark.svg')),
+              light: this.context.asAbsolutePath(path.join('dist', 'user-light.svg')),
+              dark: this.context.asAbsolutePath(path.join('dist', 'user-dark.svg')),
             };
 
             return item;
@@ -489,6 +487,28 @@ export class ExportFactory {
     }
 
     commands.executeCommand('setContext', 'isFilteredByCurrentResponsible', this.filterByCurrentResponsible);
+
+    return this.filterByCurrentResponsible;
+  }
+
+  /**
+   * Refresh comments filtering state
+   * @returns True if the state changed, False otherwise
+   */
+  public refreshFilterByToDo(): boolean {
+    return this.setFilterByToDo(this.filterByToDo);
+  }
+
+  /**
+   * Enable/Disable filtering comments by to-do
+   * @param state The state of the filter
+   * @param force Force the state change, even if it was already correctly set
+   * @returns True if the state changed, False otherwise
+   */
+  public setFilterByToDo(state: boolean, force: boolean = false): boolean {
+    this.filterByToDo = state;
+
+    commands.executeCommand('setContext', 'isFilteredByToDo', this.filterByToDo);
 
     return this.filterByCurrentResponsible;
   }
