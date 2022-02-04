@@ -104,6 +104,8 @@ export class WebViewComponent {
               done: formData.done || 0,
               responsible: formData.responsible || 'unknown',
               createdBy: formData.createdBy || 'unknown',
+              updateDate: new Date().toLocaleDateString(),
+              doneBy: formData.doneBy || formData.responsible,
             };
             commentService.updateComment(newEntry, this.getWorkingEditor());
             panel.dispose();
@@ -198,6 +200,7 @@ export class WebViewComponent {
     return fs
       .readFileSync(pathUri.fsPath, 'utf8')
       .replace('SELECT_RESPONSIBLE_LIST_STRING', this.prepareSelectListStringWithValues(this.users))
+      .replace('SELECT_DONE_BY_LIST_STRING', this.prepareSelectListStringWithValues(this.users))
       .replace('SELECT_CREATOR_LIST_STRING', this.prepareSelectListStringWithValues(this.users))
       .replace('SELECT_LIST_STRING', this.prepareSelectListStringWithValues(this.categories))
       .replace('FILENAME', path.basename(fileName));

@@ -62,6 +62,8 @@ export function createCommentFromObject(object: any | CsvEntry): CsvEntry {
   }
   const comment = JSON.parse(object) as CsvEntry;
   comment.id = CsvStructure.getDefaultValue('id')!;
+  comment.creationDate = new Date().toLocaleDateString();
+  comment.doneBy = comment.doneBy || comment.responsible;
   return comment;
 }
 

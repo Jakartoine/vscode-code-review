@@ -235,6 +235,14 @@
             <label for="done">Mark as done</label>
             <input id="done" name="done" type="checkbox" title="Make this comment as done." />
           </p>
+
+          <p>
+            <label for="doneBy">Code review done by</label>
+            <select id="doneBy" name="doneBy">
+              <option value=""></option>
+              SELECT_DONE_BY_LIST_STRING
+            </select>
+          </p>
         </div>
       </div>
       <div class="actions">
@@ -288,12 +296,28 @@
       document.getElementById('additional').value = event.data.comment.additional || '';
       document.getElementById('category').value = event.data.comment.category;
       document.getElementById('createdBy').value = event.data.comment.createdBy;
+      document.getElementById('doneBy').value = event.data.comment.doneBy;
       document.getElementById('responsible').value = event.data.comment.responsible;
       document.getElementById('done').checked = Number(event.data.comment.done) !== 0;
 
       if (event.data.comment.priority) {
         document.getElementById('prio-' + event.data.comment.priority).checked = true;
       }
+
+      const formIsDisabled = event.data.comment.done === 1;
+
+      document.getElementById('add').disabled = formIsDisabled;
+      document.getElementById('title').disabled = formIsDisabled;
+      document.getElementById('comment').disabled = formIsDisabled;
+      document.getElementById('additional').disabled = formIsDisabled;
+      document.getElementById('category').disabled = formIsDisabled;
+      document.getElementById('createdBy').disabled = formIsDisabled;
+      document.getElementById('doneBy').disabled = formIsDisabled;
+      document.getElementById('responsible').disabled = formIsDisabled;
+      document.getElementById('done').disabled = formIsDisabled;
+      document.getElementById('prio-' + 1).disabled = formIsDisabled;
+      document.getElementById('prio-' + 2).disabled = formIsDisabled;
+      document.getElementById('prio-' + 3).disabled = formIsDisabled;
     });
 
     const KEYCODE_ENTER = 13;
@@ -342,6 +366,7 @@
       const responsible = document.getElementById('responsible').value || 'unknown';
       const additional = document.getElementById('additional').value;
       const done = document.getElementById('done').checked ? 1 : 0;
+      const doneBy = document.getElementById('doneBy').value || null;
 
       const formData = {
         sha: '',
@@ -357,6 +382,7 @@
         additional,
         done: Number(done),
         code: '',
+        doneBy,
       };
 
       if (

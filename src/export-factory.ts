@@ -301,7 +301,13 @@ export class ExportFactory {
         item.command = {
           command: 'codeReview.openSelection',
           title: 'Open comment',
-          arguments: [commentGroupedInFile.data, entry],
+          arguments: [
+            {
+              group: entry.filename,
+              lines: [],
+            } as ReviewFileExportSection,
+            entry,
+          ],
         };
 
         return item;
