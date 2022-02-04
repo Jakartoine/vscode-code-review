@@ -302,6 +302,9 @@ suite('Workspace Utils', () => {
       done: 0,
       createdBy: 'string',
       responsible: 'string',
+      doneBy: 'string',
+      creationDate: 'string',
+      updateDate: 'string',
     };
     const testData: CsvEntry[] = [
       {
